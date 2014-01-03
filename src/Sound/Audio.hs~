@@ -21,47 +21,64 @@ import Foreign.Ptr
 import qualified Data.Vector as V
 import Data.Either
 
+time = 5
+fs = 44100
+fpb = time*fs
+
+--bufferCount = ((time * fs) / fpb)
+
+tsize = 200
+
+
 forEachElm_ :: Monad m => V.Vector a -> ((Int,a) -> m b) -> m ()
 forEachElm_ x f = V.foldM_ (\i e -> f (i,e) >> return (i+1)) 0 x
 
-play :: Double -> V.Vector Float -> IO ()
-play fs x = do
-	xMV <- newMVar x
-	let len = V.length x
-	playWithBlockingIO len fs x
-	return ()
+play :: V.Vector Float -> IO ()
+play x = do
+	outDev <- (return 2)
+	putStrLn (show outDev)
+	let outputParameters = PaStreamParameters (PaDeviceIndex outDev) 1 paFloat32 (PaTime 0) nullPtr
 
-playWithBlockingIO :: Int -> Double -> V.Vector Float -> IO (Either Error ())
-playWithBlockingIO len fs x = do
-	let numOutChan = 1
+	pa_Initialize
 
-	putStrLn "AQUI"
-	initialize
-	strm' <- (openDefaultStream 0 numOutChan fs Nothing Nothing Nothing) :: IO (Either Error (Stream CFloat CFloat))
-	let strm'' = rights [strm']
-	if (length strm'')==0 then do putStrLn "BOOM"
-	else do
-		let strm = (head strm'')
-		putStrLn "OKK"
-		closeStream strm
-		return ()
-	terminate
-	return $ Right ()
-	--withDefaultStream 0 numOutChan fs Nothing Nothing Nothing $ \(strm :: Stream CFloat CFloat) -> return $ Right ()
---		allocaBytes (len*4) $ \out' -> do
---			out <- newForeignPtr_ out'
-			--startStream strm
-			--releaseStream len x out strm
-			--stopStream strm
---			return $ Right ()
+	alloca $ \ptrOutParam' -> do
+		ptrOutParam'' <- newForeignPtr_ ptrOutParam'
+		withForeignPtr ptrOutParam'' $ \ptrOutParam -> do
+			poke ptrOutParam outputParameters
+			alloca $ \ptrPtrStrm'' -> do
+				ptrPtrStrm' <- newForeignPtr_ ptrPtrStrm''
+				withForeignPtr ptrPtrStrm' $ \ptrPtrStrm -> do
+					result <- pa_OpenStream ptrPtrStrm nullPtr ptrOutParam 44100 fpb paNoFlag nullFunPtr nullPtr
 
-	where
-		releaseStream :: Int -> V.Vector Float -> ForeignPtr CFloat -> Stream CFloat CFloat -> IO ()
-		releaseStream len x out strm = do
-			putStrLn "NADAA"
-			--withForeignPtr out $ \p -> forEachElm_ x (\(i,e) -> pokeElemOff p i (realToFrac e))
-			putStrLn "NADAO"
-			--writeStream strm (fromIntegral len) out
-			putStrLn "NADA"
-			return ()
+					if result==(unPaErrorCode paNoError) then do
+						ptrStrm <- peek ptrPtrStrm
+						startRes <- pa_StartStream ptrStrm
+						if startRes==(unPaErrorCode paNoError) then do
+							putStrLn (show ((fromIntegral fpb)*3-10258))
+							allocaBytes ((fromIntegral fpb)*3-10258) $ \out' -> do
+								outData <- newForeignPtr_ out'
+								withForeignPtr outData $ \p -> do
+									forEachElm_ x (\(i,e) -> pokeElemOff (p::(Ptr CFloat)) i (realToFrac e))
+									res <- pa_WriteStream (castPtr ptrStrm) (castPtr p) fpb
+									if res==(unPaErrorCode paNoError) then do
+										putStrLn "Golo"
+										res <- pa_StopStream (castPtr ptrStrm)
+										if res==(unPaErrorCode paNoError) then do
+											putStrLn "Golo2"
+										else do
+											putStrLn "BOOM4"
+										return ()
+									else do
+										putStrLn "BOOM3"
+										return ()
+						else do
+							putStrLn "BOOM2"
+							putStrLn (show startRes)
+							return ()
+					else do
+						putStrLn "BOOM1"
+						putStrLn (show result)
+						return ()
+	pa_Terminate
+	putStrLn "FIM"
 

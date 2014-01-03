@@ -8,9 +8,9 @@ all:
 	$(CABAL) build
 
 test:
-	$(CABAL) configure --enable-tests
+#$(CABAL) configure --enable-tests
 	$(CABAL) build
-	$(CABAL) test
+	$(CABAL) test --show-details=always
 
 clean:
 	$(RMDIR) dist

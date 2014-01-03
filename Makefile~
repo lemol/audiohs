@@ -8,9 +8,10 @@ all:
 	$(CABAL) build
 
 test:
-	$(CABAL) configure --enable-tests && \
-	$(CABAL) build && \
+#$(CABAL) configure --enable-tests
+	$(CABAL) build
 	$(CABAL) test
+	more dist/test/hsaudio-0.1.0.0-test1.log
 
 clean:
 	$(RMDIR) dist
