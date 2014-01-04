@@ -7,7 +7,6 @@ import System.Exit (exitFailure)
 fs = 44100
 f = 820
 
---tone f t fs = V.fromList $ map (sin.(2*pi*f/fs*)) [0..t*fs-1]
 sinWave f fs = (sin . (2*pi*f/fs*)) . fromInteger . toEnum
 tone f t fs = V.generate (fromEnum $ t*fs) $ (sinWave f fs)
 

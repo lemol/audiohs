@@ -31,8 +31,8 @@ allocaForeignPtrBytes n fn =
 	mallocForeignPtrBytes n >>= (withForeignPtr' fn)
 
 
-bufferSize = 1024*2
-sizeCFloat = sizeOf(undefined::CFloat)
+defaultBufferSize 	= 1024 :: Int
+sizeCFloat 		= sizeOf(undefined::CFloat)
 
 forEachElm_ :: Monad m => V.Vector a -> ((Int,a) -> m b) -> m ()
 forEachElm_ x f = V.foldM_ (\i e -> f (i,e) >> return (i+1)) 0 x
@@ -43,8 +43,23 @@ pokeFromVector_ ptr conv x = forEachElm_ x (\(i,e) -> pokeElemOff ptr i (conv e)
 play :: Double -> V.Vector Float -> IO ()
 play fs x = playWithBlockingIO fs x >> return ()
 
+{-
+class (Storable a) => PlayableFormat a where
+	paSampleFormat :: a -> PaSampleFormat
+	toForeign :: (StreamFormat b) => a -> b
+	fromForeign :: (StreamFormat b) => b -> a
+
+instance PlayableFormat Float where
+	paSampleFormat = paFloat32
+	toForeign x = (realToFrac x) :: CFloat
+	fromForeign x = (realToFrac x) :: CFloat
+-}
+
 playWithBlockingIO :: Double -> V.Vector Float -> IO (Either Error ())
-playWithBlockingIO fs x = withPortAudio $ alloca $ \ptrPtrStream'' -> do
+playWithBlockingIO = playWithBlockingIOCustom defaultBufferSize
+
+playWithBlockingIOCustom :: Int -> Double -> V.Vector Float -> IO (Either Error ())
+playWithBlockingIOCustom bufferSize fs x = withPortAudio $ alloca $ \ptrPtrStream'' -> do
 	ptrPtrStream' <- (newForeignPtr_ ptrPtrStream'') :: IO (ForeignPtr (Ptr PaStream))
 	withForeignPtr ptrPtrStream' $ \ptrPtrStream -> do
 		res <- pa_OpenDefaultStream ptrPtrStream 0 1 paFloat32 (realToFrac fs) (toEnum bufferSize) nullFunPtr nullPtr

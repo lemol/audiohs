@@ -57,12 +57,16 @@ library
   build-depends:       base ==4.6.*, portaudio ==0.2.*, vector ==0.10.*
   extra-Libraries:     portaudio
   ghc-options: -trust portaudio
-
+  
 Test-Suite test1
   hs-source-dirs: test
   type:       exitcode-stdio-1.0
   main-is:    simple1.hs
   build-depends: base, vector ==0.10.*, hsaudio ==0.1.0.0
-  ghc-options: -trust hsaudio
 
+Test-Suite examples
+  hs-source-dirs: examples
+  type:       exitcode-stdio-1.0
+  main-is:    BirthdaySong.hs
+  build-depends: base, vector ==0.10.*, hsaudio ==0.1.0.0
 
