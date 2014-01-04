@@ -56,6 +56,7 @@ library
   -- Other library packages from which modules are imported.
   build-depends:       base ==4.6.*, portaudio ==0.2.*, vector ==0.10.*
   extra-Libraries:     portaudio
+  ghc-options: -trust portaudio
 
 Test-Suite test1
   hs-source-dirs: test

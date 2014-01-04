@@ -1,5 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DoAndIfThenElse #-}
+--{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 
 module Sound.Audio(play) where
 
@@ -21,64 +23,48 @@ import Foreign.Ptr
 import qualified Data.Vector as V
 import Data.Either
 
-time = 5
-fs = 44100
-fpb = time*fs
+withForeignPtr' :: (Ptr a -> IO b) -> ForeignPtr a -> IO b
+withForeignPtr' fn ptr = withForeignPtr ptr fn
 
---bufferCount = ((time * fs) / fpb)
+allocaForeignPtrBytes :: Int -> (Ptr a -> IO b) -> IO b
+allocaForeignPtrBytes n fn =
+	mallocForeignPtrBytes n >>= (withForeignPtr' fn)
 
-tsize = 200
 
+bufferSize = 1024*2
+sizeCFloat = sizeOf(undefined::CFloat)
 
 forEachElm_ :: Monad m => V.Vector a -> ((Int,a) -> m b) -> m ()
 forEachElm_ x f = V.foldM_ (\i e -> f (i,e) >> return (i+1)) 0 x
 
-play :: V.Vector Float -> IO ()
-play x = do
-	outDev <- (return 2)
-	putStrLn (show outDev)
-	let outputParameters = PaStreamParameters (PaDeviceIndex outDev) 1 paFloat32 (PaTime 0) nullPtr
+pokeFromVector_ :: Storable b => Ptr b -> (a -> b) -> V.Vector a -> IO ()
+pokeFromVector_ ptr conv x = forEachElm_ x (\(i,e) -> pokeElemOff ptr i (conv e))
 
-	pa_Initialize
+play :: Double -> V.Vector Float -> IO ()
+play fs x = playWithBlockingIO fs x >> return ()
 
-	alloca $ \ptrOutParam' -> do
-		ptrOutParam'' <- newForeignPtr_ ptrOutParam'
-		withForeignPtr ptrOutParam'' $ \ptrOutParam -> do
-			poke ptrOutParam outputParameters
-			alloca $ \ptrPtrStrm'' -> do
-				ptrPtrStrm' <- newForeignPtr_ ptrPtrStrm''
-				withForeignPtr ptrPtrStrm' $ \ptrPtrStrm -> do
-					result <- pa_OpenStream ptrPtrStrm nullPtr ptrOutParam 44100 fpb paNoFlag nullFunPtr nullPtr
+playWithBlockingIO :: Double -> V.Vector Float -> IO (Either Error ())
+playWithBlockingIO fs x = withPortAudio $ alloca $ \ptrPtrStream'' -> do
+	ptrPtrStream' <- (newForeignPtr_ ptrPtrStream'') :: IO (ForeignPtr (Ptr PaStream))
+	withForeignPtr ptrPtrStream' $ \ptrPtrStream -> do
+		res <- pa_OpenDefaultStream ptrPtrStream 0 1 paFloat32 (realToFrac fs) (toEnum bufferSize) nullFunPtr nullPtr
+		ptrStream <- peek ptrPtrStream
 
-					if result==(unPaErrorCode paNoError) then do
-						ptrStrm <- peek ptrPtrStrm
-						startRes <- pa_StartStream ptrStrm
-						if startRes==(unPaErrorCode paNoError) then do
-							putStrLn (show ((fromIntegral fpb)*sizeOf(undefined::CFloat)))
-							allocaBytes ((fromIntegral fpb)*sizeOf(undefined::CFloat)) $ \out' -> do
-								outData <- newForeignPtr_ out'
-								withForeignPtr outData $ \p -> do
-									forEachElm_ x (\(i,e) -> pokeElemOff (p::(Ptr CFloat)) i (realToFrac e))
-									res <- pa_WriteStream (castPtr ptrStrm) (castPtr p) fpb
-									if res==(unPaErrorCode paNoError) then do
-										putStrLn "Golo"
-										res <- pa_StopStream (castPtr ptrStrm)
-										if res==(unPaErrorCode paNoError) then do
-											putStrLn "Golo2"
-										else do
-											putStrLn "BOOM4"
-										return ()
-									else do
-										putStrLn "BOOM3"
-										return ()
-						else do
-							putStrLn "BOOM2"
-							putStrLn (show startRes)
-							return ()
-					else do
-						putStrLn "BOOM1"
-						putStrLn (show result)
-						return ()
-	pa_Terminate
-	putStrLn "FIM"
+		pa_StartStream ptrStream
+		playBuffer ptrStream 1 $ V.splitAt bufferSize x 
+		pa_StopStream ptrStream
+	return $ Right ()
+
+	where
+		playBuffer :: Ptr PaStream -> Int -> (V.Vector Float, V.Vector Float) -> IO ()
+		playBuffer ptrStream i (buffer, buffers) = do
+			--putStrLn $ "buffer=" ++ (show (V.length buffer)) ++ ", buffers=" ++ (show (V.length buffers))
+			allocaForeignPtrBytes (bufferSize*sizeCFloat*sizeCFloat) $ \ptr -> do
+				pokeFromVector_ (ptr::Ptr CFloat) realToFrac buffer
+				pa_WriteStream ptrStream (castPtr ptr) (toEnum bufferSize)
+
+			if (V.length buffers)==0 then
+				return ()
+			else
+				playBuffer ptrStream (i+1) $ V.splitAt bufferSize buffers
 
