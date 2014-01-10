@@ -82,7 +82,7 @@ Test-Suite test1
 Test-Suite examples
   hs-source-dirs: examples
   type:       exitcode-stdio-1.0
-  main-is:    BirthdaySong.hs
+  main-is:    MicrofoneRepeater.hs
 
   if !flag(runExamples)
     buildable: False

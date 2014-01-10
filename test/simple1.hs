@@ -1,4 +1,3 @@
---{-# LANGUAGE Safe #-}
 
 import Sound.Audio
 import qualified Data.Vector as V
