@@ -1,4 +1,5 @@
 @echo off
-set type=%1
 set path=%path%;d:\L9T\labs\haskell\hsaudio\libs
-make %type%
+rem cabal configure -frunExamples --enable-test --extra-lib-dir=D:\L9T\labs\haskell\hsaudio\libs
+cabal build
+cabal test --show-details=always

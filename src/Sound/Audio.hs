@@ -8,9 +8,8 @@ module Sound.Audio(play) where
 import Sound.PortAudio.Base
 import Sound.PortAudio
 
-import Control.Monad (void, unless, foldM, foldM_, forM_)
+import Control.Monad (void, unless)
 import Control.Concurrent.MVar ()
-import Control.Concurrent (threadDelay)
 
 import Foreign.C.Types
 import Foreign.Storable
@@ -19,7 +18,7 @@ import Foreign.Marshal.Alloc
 import Foreign.Ptr
 
 import qualified Data.Vector as V
-import Data.Either
+import Data.Either ()
 
 withForeignPtr' :: (Ptr a -> IO b) -> ForeignPtr a -> IO b
 withForeignPtr' fn ptr = withForeignPtr ptr fn
@@ -42,18 +41,6 @@ pokeFromVector_ ptr conv x = forEachElm_ x (\(i,e) -> pokeElemOff ptr i (conv e)
 
 play :: Double -> V.Vector Float -> IO ()
 play fs x = void (playWithBlockingIO fs x)
-
-{-
-class (Storable a) => PlayableFormat a where
-	paSampleFormat :: a -> PaSampleFormat
-	toForeign :: (StreamFormat b) => a -> b
-	fromForeign :: (StreamFormat b) => b -> a
-
-instance PlayableFormat Float where
-	paSampleFormat = paFloat32
-	toForeign x = (realToFrac x) :: CFloat
-	fromForeign x = (realToFrac x) :: CFloat
--}
 
 playWithBlockingIO :: Double -> V.Vector Float -> IO (Either Error ())
 playWithBlockingIO = playWithBlockingIOCustom defaultBufferSize

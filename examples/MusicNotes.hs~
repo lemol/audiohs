@@ -11,47 +11,61 @@ data Note = C | Cs |
             B
 	deriving (Enum, Eq, Show)
 
-data Sound = Sound (Maybe Note) Octave Duration
+data Sound = Sound Note Octave Duration
+           | Silence Duration
 
-c_ o d = Sound (Just C) o d; cs_ o d = Sound (Just Cs) o d
-d_ o d = Sound (Just D) o d; ds_ o d = Sound (Just Ds) o d
-e_ o d = Sound (Just E) o d
-f_ o d = Sound (Just F) o d; fs_ o d = Sound (Just Fs) o d
-g_ o d = Sound (Just G) o d; gs_ o d = Sound (Just Gs) o d
-a_ o d = Sound (Just A) o d; as_ o d = Sound (Just As) o d
-b_ o d = Sound (Just B) o d
-s_   d = Sound Nothing  0 d
+c, cs, d, ds, e, f, fs, g, gs, a, as, b
+	:: Octave -> Duration -> Sound
 
-type Octave = Float --Int
+c = Sound C; cs = Sound Cs
+d = Sound D; ds = Sound Ds
+e = Sound E
+f = Sound F; fs = Sound Fs
+g = Sound G; gs = Sound Gs
+a = Sound A; as = Sound As
+b = Sound B
+
+n1, n2, n4, n8, n16, n32
+	:: Sound
+
+n1   = Silence 1
+n2   = Silence (1/2)
+n4   = Silence (1/4)
+n8   = Silence (1/8)
+n16  = Silence (1/16)
+n32  = Silence (1/32)
+
+type Octave = Int
 type Duration = Float
 type Frequency = Float
 
 type MusicSound = (Int -> Float)
 
 fundamental :: Note -> Frequency
-fundamental note = fundamentals !! (fromEnum note)
+fundamental note = fundamentals !! fromEnum note
 	where
 		fundamentals = [261.6, 277.2, 293.7, 311.1, 329.6, 349.2, 370.0, 392.0, 415.3, 440.0, 466.2, 493.9]
 
-fs = 44100 :: Frequency
+fsamp :: Frequency
+fsamp = 44100
 
-sinWave f = (sin . (2*pi*f/fs*)) . fromInteger . toEnum
+sinWave :: Frequency -> Int -> Frequency
+sinWave freq = (sin . (2*pi*freq/fsamp*)) . fromInteger . toEnum
 
 pitch :: Note -> Octave -> MusicSound
-pitch note oct = sinWave freq
-	where
-		freq = (2**(oct-4)) * (fundamental note)
+pitch note oct = let freq = (2**(realToFrac oct - 4)) * fundamental note
+                 in sinWave freq
 
 space :: MusicSound
-space = \x->0
+space _ = 0
 
-toInt = fromEnum . toRational
+toInt :: RealFrac a => a -> Int
+toInt = fromIntegral . floor
 
 sound :: Sound -> V.Vector Float
-sound (Sound maybeNote oct dur) = theSound maybeNote
-	where
-		theSound (Just note) = V.generate (toInt $ dur*fs) $ pitch note oct
-		theSound Nothing     = V.generate (toInt $ dur*fs) $ space
+sound (Sound note oct dur) = V.generate (toInt $ dur*fsamp) $ pitch note oct
+sound (Silence dur)        = V.generate (toInt $ dur*fsamp)   space
 
+music :: [Sound] -> V.Vector Float
 music x = V.concat $ map sound x
 
