@@ -9,13 +9,11 @@ Install
 At background this package uses the cross platform [PortAudio] [portaudio-lib] library to play and record sounds, so first the portaudio bindings [portaudio] [portaudio-package] for haskell must be installed. See [here] [portaudio-package] for instructions.
 
 1. Install [portaudio][portaudio-package] bindings
-
 ```shell
 cabal install portaudio
 ```
 
-2. Download [the last version of hsaudio] [hsaudio-master] and install it
-
+2. Download [the lastest version of hsaudio] [hsaudio-master] and install it:
 ```shell
 git clone https://github.com/lemol/hsaudio.git
 cd hsaudio
@@ -39,7 +37,6 @@ Examples
 --------
 
 1. Playing a 3 seconds 440 Hz tone.
-
 ```haskell
 import Sound.Audio (play)
 import qualified Data.Vector as V
@@ -58,7 +55,6 @@ main = play fs sineWave
 ```
 
 2. Record for 5 seconds and play the result.
-
 ```haskell
 import Sound.Audio (play, record)
 
@@ -72,25 +68,18 @@ main = do
 ```
 
 Or, even better:
-
 ```haskell
 main = record (5*44100) fs >>= play fs
 ```
 
 License
 -------
-(c) 2014 Leza Morais Lutonda (Lemol-C)
-
+(c) 2014 Leza Morais Lutonda (Lemol-C) 
 [MIT License] [lemolsoft-mit-license]
 
 Contribuitions
 --------------
 Critiques, suggestion, pull request, etc. all are wellcome!
-
-License
--------
-(c) 2014 Leza Morais Lutonda (Lemol-C)
-[MIT License] [lemolsoft-mit-license]
 
 Credits
 -------
