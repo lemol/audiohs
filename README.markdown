@@ -36,7 +36,7 @@ x <- record count fs
 Examples
 --------
 
-1. Playing a 3 seconds 440 Hz tone
+1. Playing a 3 seconds 440 Hz tone.
 ```haskell
 import Sound.Audio (play)
 import qualified Data.Vector as V
