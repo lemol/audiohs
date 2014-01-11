@@ -82,7 +82,7 @@ Test-Suite test1
 Test-Suite examples
   hs-source-dirs: examples
   type:       exitcode-stdio-1.0
-  main-is:    MicrofoneRepeater.hs
+  main-is:    SimpleRecord.hs
 
   if !flag(runExamples)
     buildable: False
