@@ -82,6 +82,11 @@ Contribuitions
 --------------
 Critiques, suggestion, pull request, etc. all are wellcome!
 
+License
+-------
+(c) 2014 Leza Morais Lutonda (Lemol-C)
+[MIT License] [lemolsoft-mit-license]
+
 Credits
 -------
 This package is thanks to the [portaudio][portaudio-package] bindings for haskell.
