@@ -1,4 +1,4 @@
-hsaudio
+Audiohs
 =======
 
 Provides functions for easily play and record sounds in haskell. It uses `Data.Vector Float` as array type.
@@ -14,10 +14,10 @@ At background this package uses the cross platform [PortAudio] [portaudio-lib] l
 cabal install portaudio
 ```
 
-2. Download [the lastest version of hsaudio] [hsaudio-master] and install it:
+2. Download [the lastest version of audiohs] [hsaudio-master] and install it:
 
 ```shell
-git clone https://github.com/lemol/hsaudio.git
+git clone https://github.com/lemol/audiohs.git
 cd hsaudio
 cabal install
 ```
@@ -93,4 +93,4 @@ This package is thanks to the [portaudio][portaudio-package] bindings for haskel
 [portaudio-lib]: http://portaudio.com/
 [portaudio-package]: http://hackage.haskell.org/package/portaudio
 [lemolsoft-mit-license]: http://lemolsoft.mit-license.org/
-[hsaudio-master]: https://github.com/lemol/hsaudio/archive/master.zip
+[hsaudio-master]: https://github.com/lemol/audiohs/archive/master.zip

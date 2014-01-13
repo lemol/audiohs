@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 -- The name of the package.	
-name:                hsaudio
+name:                audiohs
 
 -- The package version.  See the Haskell package versioning policy (PVP) 
 -- for standards guiding when and how versions should be incremented.
@@ -19,7 +19,7 @@ synopsis:            A library for play and record audio
 -- description:         
 
 -- URL for the project homepage or repository.
-homepage:            https://github.com/lemol/hsaudio
+homepage:            https://github.com/lemol/audiohs
 
 -- The license under which the package is released.
 license:             MIT
@@ -77,12 +77,12 @@ Test-Suite test1
     build-depends:
       base,
       vector ==0.10.*,
-      hsaudio ==0.1.0.0
+      audiohs ==0.1.0.0
 
 Test-Suite examples
   hs-source-dirs: examples
   type:       exitcode-stdio-1.0
-  main-is:    SimpleRecord.hs
+  main-is:    ChristmasSong.hs
 
   if !flag(runExamples)
     buildable: False
@@ -90,5 +90,5 @@ Test-Suite examples
     build-depends:
       base,
       vector ==0.10.*,
-      hsaudio ==0.1.0.0
+      audiohs ==0.1.0.0
 
